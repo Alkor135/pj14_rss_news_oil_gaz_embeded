@@ -74,9 +74,7 @@ def read_news_dbs_to_df(db_dir: Path, num_dbs: int | None = None) -> pd.DataFram
     Ожидаемый формат файлов: rss_news_YYYY_MM.db
     Колонки в таблице: loaded_at, date, title, provider.
     """
-    db_files = sorted(
-        db_dir.glob("rss_news_*.db")
-    )
+    db_files = sorted(db_dir.glob("rss_news_*.db"))
 
     if num_dbs is not None and num_dbs > 0:
         db_files = db_files[-num_dbs:]  # последние num_dbs файлов
@@ -113,7 +111,7 @@ def read_news_dbs_to_df(db_dir: Path, num_dbs: int | None = None) -> pd.DataFram
     df_all = df_all[df_all['title'].str.contains(keywords_pattern, case=False, na=False)]
     logging.info(f"Отфильтровано {len(df_all)} новостей по ключевым словам 'нефт' или 'газ'")
 
-    # Приводим loaded_at к datetime и сортируем
+    # Приводим loaded_at к datetime и сортируем по времени загрузки в БД
     df_all["loaded_at"] = pd.to_datetime(df_all["loaded_at"])
     df_all = df_all.sort_values(["loaded_at", "provider", "title"]).reset_index(drop=True)
 
@@ -121,8 +119,8 @@ def read_news_dbs_to_df(db_dir: Path, num_dbs: int | None = None) -> pd.DataFram
 
 def build_trade_intervals(
     db_path: str,
-    time_start: str,
-    time_end: str,
+    time_start: str = '21:00:00',
+    time_end: str = '20:59:59',
     table_name: str = "Futures"
 ):
     """
