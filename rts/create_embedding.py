@@ -49,7 +49,8 @@ else:
     sys.exit()
 
 # Путь к pkl-файлу с кэшем
-cache_file = Path(settings['cache_file'].replace('{ticker_lc}', ticker_lc))
+# cache_file = Path(settings['cache_file'].replace('{ticker_lc}', ticker_lc))
+cache_file = Path(__file__).parent / 'embeddings_ollama.pkl'
 
 # Создание папки для логов
 log_dir = Path(__file__).parent / 'log'
