@@ -255,8 +255,8 @@ if __name__ == "__main__":
         "display.max_columns", 10,
         "display.max_colwidth", 100
     ):
-        print("Датафрейм с эмбеддингами:")
-        print(df_embeddings)
+        print("Датафрейм с эмбеддингами (tail):")
+        print(df_embeddings.tail())
 
     print("Чанков в первом документе:", len(df_embeddings['CHUNKS'].iloc[0]))
     print("Размерность эмбеддинга:", len(df_embeddings['CHUNKS'].iloc[0][0]["embedding"]))
