@@ -211,3 +211,4 @@ __marimo__/
 rts/log/*
 rts/plots/*
 rts/*.pkl
+rts/*.xlsx

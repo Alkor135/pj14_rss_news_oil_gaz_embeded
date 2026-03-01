@@ -281,6 +281,17 @@ def predict_next_session(
 
     logging.info("🔮 Запуск предсказания следующей сессии")
 
+    # Последний markdown-файл с новостями (дата из имени файла = дата в кэше эмбеддингов)
+    last_md_date = df_emb.index.max().date()
+    logging.info(f"Последний md-файл с новостями: {last_md_date}.md")
+
+    # Последняя дневная свеча в БД котировок (напрямую из БД, без отсечения NaN)
+    with sqlite3.connect(path_db_day) as conn:
+        last_bar_date = pd.read_sql_query(
+            "SELECT MAX(TRADEDATE) as max_date FROM Futures", conn
+        ).iloc[0]["max_date"]
+    logging.info(f"Последняя дневная свеча в БД: {last_bar_date}")
+
     # ------------------------------------------------------
     # 1️⃣ Последняя дата из embeddings
     # ------------------------------------------------------
@@ -527,16 +538,16 @@ def main(path_db_day, cache_file):
         print("\nРезультирующий DataFrame (df_rez):")
         print(df_rez)
 
-    # # Сохранение DataFrame в Excel файл
-    # df_rez.to_excel('df_rez_output.xlsx', index=False)
+    # Сохранение DataFrame в Excel файл
+    df_rez.to_excel(Path(__file__).parent / 'df_rez_output.xlsx', index=True)
 
     # ===============================
     # График cumulative P/L + наложенная столбчатая диаграмма max
     # ===============================
 
-    # # --- ЗЕРКАЛЬНОЕ ОТОБРАЖЕНИЕ ---
-    # df_rez["P/L"] *= -1
-    # # -------------------------------
+    # --- ЗЕРКАЛЬНОЕ ОТОБРАЖЕНИЕ ---
+    df_rez["P/L"] *= -1
+    # -------------------------------
 
     df_rez["CUM_P/L"] = df_rez["P/L"].cumsum()
 
@@ -554,7 +565,9 @@ def main(path_db_day, cache_file):
     ax1.tick_params(axis='y', labelcolor='tab:blue')
     ax1.set_xlabel("Date")
     ax1.grid(True, axis='y', alpha=0.3)
-    ax1.set_title(f"Cumulative P/L & Best Window (k) {model_name.split(':')[0]} {timestamp}")
+    ax1.set_title(
+        f"Cumulative P/L & Best Window (k) {model_name.split(':')[0]} {provider} {timestamp}"
+        )
 
     # Вторая ось Y для столбчатой диаграммы (слева)
     ax2 = ax1.twinx()
@@ -581,7 +594,7 @@ def main(path_db_day, cache_file):
     # Сохранение графика
     plot_dir = Path(__file__).parent / 'plots'
     plot_dir.mkdir(exist_ok=True)
-    plot_path = plot_dir / f'{model_name.split(":")[0]}_{provider}_{timestamp}.png'
+    plot_path = plot_dir / f'{model_name.split(":")[0]}_{provider}.png'
     plt.savefig(plot_path)
     logging.info(f"📊 График сохранён: {plot_path}")
 
