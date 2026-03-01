@@ -26,8 +26,8 @@ python rts/check_pkl.py
 
 # 6. Исполнение сделок в QUIK (живая торговля)
 python trade/trade_rts_tri.py   # RTS фьючерсы
-python trade/trade_ng_tri.py    # Природный газ
-python trade/trade_mix_tri.py   # Смешанный
+python trade/trade_ng_tri.py    # Тикер фьючерса на природный газ
+python trade/trade_mix_tri.py   # Тикер фьючерса на индекс Мосбиржи
 ```
 
 ## Architecture & Data Flow
