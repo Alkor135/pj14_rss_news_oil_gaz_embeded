@@ -19,7 +19,7 @@ SCRIPTS = [
     r"rts\create_markdown_files.py",
     r"rts\create_embedding.py",
     r"rts\simulate_trade.py",
-    # r"trade\trade_rts_tri.py",
+    r"trade\trade_rts_tri.py",
 ]
 
 def run_script(script: str) -> int:
