@@ -12,7 +12,7 @@ quantity_open = '1'
 ticker_lc = 'rts'  # Название инструмента в нижнем регистре для путей
 
 # Пути к файлам
-predict_path = Path(f"C:/Users/Alkor/gd/predict_ai/{ticker_lc}_investing_ollama")
+predict_path = Path(f"C:/Users/Alkor/gd/predict_ai/{ticker_lc}_all_oil_gaz_gemma")
 log_path = Path(__file__).parent / "log"
 trade_path = Path(r"C:\QUIK_VTB_2025_ЕБС\algotrade")
 trade_filepath = trade_path / "input.tri"
