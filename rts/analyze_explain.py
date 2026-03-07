@@ -1,3 +1,9 @@
+"""
+Анализ explain-данных из explain_topk_all.pkl.
+Загружает результаты попарного сравнения чанков для каждого k
+и выводит статистику по прибыльным/убыточным совпадениям.
+"""
+
 from pathlib import Path
 import pickle
 import pandas as pd
