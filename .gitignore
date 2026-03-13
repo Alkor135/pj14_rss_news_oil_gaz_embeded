@@ -213,3 +213,7 @@ rts/plots/*
 rts/*.pkl
 rts/*.xlsx
 trade/log/*
+mix/log/*
+mix/plots/*
+mix/*.pkl
+mix/*.xlsx
