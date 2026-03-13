@@ -20,6 +20,12 @@ SCRIPTS = [
     r"rts\create_embedding.py",
     r"rts\simulate_trade.py",
     r"trade\trade_rts_tri.py",
+
+    r"mix\download_minutes_to_db.py",
+    r"mix\convert_minutes_to_days.py",
+    r"mix\create_embedding.py",
+    r"mix\simulate_trade.py",
+    # r"trade\trade_mix_tri.py",
 ]
 
 def run_script(script: str) -> int:

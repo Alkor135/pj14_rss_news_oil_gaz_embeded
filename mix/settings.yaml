@@ -1,7 +1,7 @@
 # mix/settings.yaml
 
 ticker: 'MIX'
-ticker_lc: ''
+ticker_lc: 'mix'
 
 # Выбор модели для векторизации
 #model_name: 'bge-m3'

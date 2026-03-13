@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-TradeBot для торговли фьючерсами (RTS, природный газ) на основе эмбеддингов новостей. Система фильтрует новости по ключевым словам "нефт"/"газ" (провайдеры: Investing, Prime, Interfax), генерирует векторные представления через Ollama, ищет похожие исторические дни и предсказывает направление следующего дня. Интеграция с торговой платформой QUIK через `.tri`-файлы.
+TradeBot для торговли фьючерсами (RTS, природный газ, индекс Мосбиржи) на основе эмбеддингов новостей. Система фильтрует новости по ключевым словам "нефт"/"газ" (провайдеры: Investing, Prime, Interfax), генерирует векторные представления через Ollama, ищет похожие исторические дни и предсказывает направление следующего дня. Интеграция с торговой платформой QUIK через `.tri`-файлы. Папки `rts/` и `mix/` содержат идентичные скрипты пайплайна, каждая со своим `settings.yaml` для соответствующего тикера.
 
 ## Running Scripts
 
@@ -111,13 +111,13 @@ Quote DBs (SQLite)           create_embedding.py  →  embeddings_ollama.pkl
 - Поддержка ролловера: когда `ticker_close != ticker_open`, выполняется переоткрытие позиции на новом контракте
 - Тикеры и количества захардкожены в каждом скрипте и обновляются вручную при смене контракта
 
-## Configuration (`rts/settings.yaml`)
+## Configuration (`rts/settings.yaml`, `mix/settings.yaml`)
 
-Все пути и параметры централизованы в `settings.yaml`. Ключевые настройки:
+Каждая папка-тикер (`rts/`, `mix/`) содержит свой `settings.yaml`. Ключевые настройки:
 
 | Параметр | Назначение |
 | --- | --- |
-| `ticker` | Инструмент (RTS / NG) |
+| `ticker` | Инструмент (RTS / NG / MIX) |
 | `model_name` | Модель эмбеддингов: `embeddinggemma` (default), `bge-m3`, `qwen3-embedding:0.6b` |
 | `provider` | Источники новостей (`investing_prime_interfax`) |
 | `url_ai` | Ollama API: `http://localhost:11434/api/embeddings` |
@@ -149,9 +149,11 @@ Quote DBs (SQLite)           create_embedding.py  →  embeddings_ollama.pkl
 
 ## Logs & Output
 
-- Логи: `rts/log/` — автоматически, хранятся 3 последних на каждый скрипт
-- Графики: `rts/plots/{model_name}_{provider}_{timestamp}.png`
-- Данные анализа: `explain_topk_all.pkl` (детали совпадений для `analyze_explain.py`)
+- Логи: `{ticker_dir}/log/` — автоматически, хранятся 3 последних на каждый скрипт (`rts/log/`, `mix/log/`, `trade/log/`)
+- Графики: `{ticker_dir}/plots/{model_name}_{provider}_{timestamp}.png`
+- Данные анализа: `{ticker_dir}/explain_topk_all.pkl` (детали совпадений для `analyze_explain.py`)
+- Результаты бэктеста: `{ticker_dir}/df_rez_output.xlsx`
+- Кэш эмбеддингов: `{ticker_dir}/embeddings_ollama.pkl`
 - Транзакции QUIK: `.tri`-файлы в `trade/`
 
 ## Beget Server — RSS Collection Infrastructure
@@ -195,7 +197,8 @@ beget/
 
 ## Code Patterns
 
-- Все скрипты в `rts/` читают конфигурацию из `rts/settings.yaml` через `yaml.safe_load` на уровне модуля
+- Папки `rts/` и `mix/` содержат идентичные скрипты пайплайна (кроме `create_markdown_files.py` — только в `rts/`), каждая со своим `settings.yaml`
+- Все скрипты в `rts/` и `mix/` читают конфигурацию из `settings.yaml` через `yaml.safe_load` на уровне модуля
 - Скрипты в `trade/` не используют `settings.yaml` — конфигурация (тикеры, пути) захардкожена
 - Три скрипта `trade_*_tri.py` почти идентичны, различаются только тикерами, количеством и путями
 - Логирование: каждый скрипт создаёт файл `{script_name}_{timestamp}.txt`, ротация до 3 файлов (`rts/log/` для rts-скриптов, `trade/log/` для trade-скриптов)
