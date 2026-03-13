@@ -13,15 +13,15 @@ import logging
 
 # --- Конфигурация ---
 # Торгуемые инструменты и количество
-ticker_close = 'MXZ5'  # Инструмент для закрытия позиции
+ticker_close = 'MXH5'  # Инструмент для закрытия позиции
 quantity_close = '1'
-ticker_open = 'MXZ5'  # Инструмент для открытия новой позиции
+ticker_open = 'MXH5'  # Инструмент для открытия новой позиции
 quantity_open = '1'
 ticker_lc = 'mix'  # Название инструмента в нижнем регистре для путей
 
 # Пути к файлам
-predict_path = Path(f"C:/Users/Alkor/gd/predict_ai/{ticker_lc}_investing_ollama")
-log_path = predict_path / "log"
+predict_path = Path(f"C:/Users/Alkor/gd/predict_ai/{ticker_lc}_all_oil_gaz_gemma")
+log_path = Path(__file__).parent / "log"
 trade_path = Path(r"C:\QUIK_VTB_2025_ЕБС\algotrade")
 trade_filepath = trade_path / "input.tri"
 
@@ -34,17 +34,35 @@ today = date.today()
 current_filename = today.strftime("%Y-%m-%d") + ".txt"
 current_filepath = predict_path / current_filename
 
-# Настройка логгирования
-log_file = log_path / f'trade_{ticker_lc}_tri.txt'
+# --- Настройка логгирования ---
+# Имя файла лога с датой и временем запуска (один файл на запуск)
+timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+log_file = log_path / f'trade_{ticker_lc}_tri_{timestamp}.txt'
+
+# Настройка логгирования: файл + консоль
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler(log_file, mode='a', encoding='utf-8'),
+        logging.FileHandler(log_file, encoding='utf-8'),
         logging.StreamHandler()
     ]
 )
 logger = logging.getLogger(__name__)
+
+# Очистка старых логов (оставляем только 3 самых новых)
+def cleanup_old_logs(log_dir: Path, prefix: str, max_files: int = 3):
+    """Удаляет старые лог-файлы, оставляя max_files самых новых."""
+    log_files = sorted(log_dir.glob(f"{prefix}_*.txt"))
+    if len(log_files) > max_files:
+        for old_file in log_files[:-max_files]:
+            try:
+                old_file.unlink()
+                logger.info(f"Удалён старый лог: {old_file.name}")
+            except Exception as e:
+                logger.warning(f"Не удалось удалить {old_file}: {e}")
+
+cleanup_old_logs(log_path, prefix=f"trade_{ticker_lc}_tri")
 
 # --- Вспомогательные функции ---
 def get_direction(filepath):
@@ -145,7 +163,8 @@ def create_trade_block(tr_id, ticker, action, quantity):
         f'Цена=0;'
         f'Количество={quantity};'
         f'Условие исполнения=Поставить в очередь;'
-        f'Комментарий=SPBFUT192yc//TRI;'
+        # f'Комментарий=SPBFUT192yc//TRI;'
+        f'Комментарий={tr_id} {today.strftime("%y%m%d")};'
         f'Переносить заявку=Нет;'
         f'Дата экспирации={expiry_date};'
         f'Код внешнего пользователя=;\n'
@@ -156,44 +175,44 @@ def create_trade_block(tr_id, ticker, action, quantity):
 if ticker_close == ticker_open:
     # Условия для переворота позиций
     if current_predict == 'down' and prev_predict == 'up':
-        trade_direction = 'SELL'
-        trade_content = (
-            create_trade_block(trans_id, ticker_close, 'Продажа', quantity_close) +
-            create_trade_block(trans_id+1, ticker_open, 'Продажа', quantity_open)
-        )
-    elif current_predict == 'up' and prev_predict == 'down':
         trade_direction = 'BUY'
         trade_content = (
             create_trade_block(trans_id, ticker_close, 'Покупка', quantity_close) +
             create_trade_block(trans_id+1, ticker_open, 'Покупка', quantity_open)
         )
-# Условие ролловера (тикеры разные)
-elif ticker_close != ticker_open:
-    # Условия для переворота позиций
-    if current_predict == 'down' and prev_predict == 'up':
+    elif current_predict == 'up' and prev_predict == 'down':
         trade_direction = 'SELL'
         trade_content = (
-                create_trade_block(trans_id, ticker_close, 'Продажа', quantity_close) +
-                create_trade_block(trans_id+1, ticker_open, 'Продажа', quantity_open)
+            create_trade_block(trans_id, ticker_close, 'Продажа', quantity_close) +
+            create_trade_block(trans_id+1, ticker_open, 'Продажа', quantity_open)
+        )
+# --- Условие ролловера (тикеры разные) ---
+elif ticker_close != ticker_open:
+    # Условия для переворота позиций во время ролловера
+    if current_predict == 'down' and prev_predict == 'up':
+        trade_direction = 'BUY'
+        trade_content = (
+                create_trade_block(trans_id, ticker_close, 'Покупка', quantity_close) +
+                create_trade_block(trans_id+1, ticker_open, 'Покупка', quantity_open)
         )
     elif current_predict == 'up' and prev_predict == 'down':
-        trade_direction = 'BUY'
-        trade_content = (
-                create_trade_block(trans_id, ticker_close, 'Покупка', quantity_close) +
-                create_trade_block(trans_id+1, ticker_open, 'Покупка', quantity_open)
-        )
-    # Условия для переоткрытия позиций по новому тикеру
-    elif current_predict == 'down' and prev_predict == 'down':
         trade_direction = 'SELL'
         trade_content = (
                 create_trade_block(trans_id, ticker_close, 'Продажа', quantity_close) +
                 create_trade_block(trans_id+1, ticker_open, 'Продажа', quantity_open)
         )
-    elif current_predict == 'up' and prev_predict == 'up':
+    # Условия для переоткрытия позиций в том же направлении по новому тикеру на ролловере
+    elif current_predict == 'down' and prev_predict == 'down':
         trade_direction = 'BUY'
         trade_content = (
-                create_trade_block(trans_id, ticker_close, 'Покупка', quantity_close) +
+                create_trade_block(trans_id, ticker_close, 'Продажа', quantity_close) +
                 create_trade_block(trans_id+1, ticker_open, 'Покупка', quantity_open)
+        )
+    elif current_predict == 'up' and prev_predict == 'up':
+        trade_direction = 'SELL'
+        trade_content = (
+                create_trade_block(trans_id, ticker_close, 'Покупка', quantity_close) +
+                create_trade_block(trans_id+1, ticker_open, 'Продажа', quantity_open)
         )
 
 # --- Запись результата ---
@@ -201,7 +220,8 @@ if trade_content:
     with trade_filepath.open('a', encoding='cp1251') as f:
         f.write(trade_content)
     logger.info(f'{prev_predict=}, {current_predict=}')
-    logger.info(f"Добавлена транзакция {trade_direction} с TRANS_ID={trans_id} в файл {trade_filepath}.\n")
+    logger.info(f"Добавлена транзакция {trade_direction} с TRANS_ID={trans_id} в файл {trade_filepath}.")
+    logger.info(f"Добавлена транзакция {trade_direction} с TRANS_ID={trans_id+1} в файл {trade_filepath}.\n")
 else:
     logger.info(
         f"На {today} условия для сигналов BUY или SELL не выполнены. "
