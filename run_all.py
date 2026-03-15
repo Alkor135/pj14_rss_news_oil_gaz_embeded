@@ -36,6 +36,21 @@ SCRIPTS = [
     r"br\convert_minutes_to_days.py",
     r"br\create_embedding.py",
     r"br\simulate_trade.py",
+
+    r"gold\download_minutes_to_db.py",
+    r"gold\convert_minutes_to_days.py",
+    r"gold\create_embedding.py",
+    r"gold\simulate_trade.py",
+
+    r"si\download_minutes_to_db.py",
+    r"si\convert_minutes_to_days.py",
+    r"si\create_embedding.py",
+    r"si\simulate_trade.py",
+
+    r"spyf\download_minutes_to_db.py",
+    r"spyf\convert_minutes_to_days.py",
+    r"spyf\create_embedding.py",
+    r"spyf\simulate_trade.py",
 ]
 
 def run_script(script: str) -> int:
