@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-TradeBot для торговли фьючерсами (RTS, природный газ, индекс Мосбиржи) на основе эмбеддингов новостей. Система фильтрует новости по ключевым словам "нефт"/"газ" (провайдеры: Investing, Prime, Interfax), генерирует векторные представления через Ollama, ищет похожие исторические дни и предсказывает направление следующего дня. Интеграция с торговой платформой QUIK через `.tri`-файлы. Папки `rts/` и `mix/` содержат идентичные скрипты пайплайна, каждая со своим `settings.yaml` для соответствующего тикера.
+TradeBot для торговли фьючерсами (RTS, природный газ, индекс Мосбиржи) на основе эмбеддингов новостей. Система фильтрует новости по ключевым словам "нефт"/"газ" (провайдеры: Investing, Prime, Interfax), генерирует векторные представления через Ollama, ищет похожие исторические дни и предсказывает направление следующего дня. Интеграция с торговой платформой QUIK через `.tri`-файлы. Папки `rts/`, `mix/`, `ng/`, `br/`, `gold/`, `si/`, `spyf/` содержат идентичные скрипты пайплайна, каждая со своим `settings.yaml` для соответствующего тикера.
 
 ## Running Scripts
 
@@ -42,6 +42,9 @@ python rts/check_pkl.py
 python trade/trade_rts_tri.py   # RTS фьючерсы
 python trade/trade_ng_tri.py    # Тикер фьючерса на природный газ
 python trade/trade_mix_tri.py   # Тикер фьючерса на индекс Мосбиржи
+
+# Аналогичные скрипты для других тикеров (ng/, br/, gold/, si/, spyf/)
+# запускаются автоматически через run_all.py
 ```
 
 ## Architecture & Data Flow
@@ -111,13 +114,13 @@ Quote DBs (SQLite)           create_embedding.py  →  embeddings_ollama.pkl
 - Поддержка ролловера: когда `ticker_close != ticker_open`, выполняется переоткрытие позиции на новом контракте
 - Тикеры и количества захардкожены в каждом скрипте и обновляются вручную при смене контракта
 
-## Configuration (`rts/settings.yaml`, `mix/settings.yaml`)
+## Configuration (`settings.yaml` в каждой папке-тикере)
 
-Каждая папка-тикер (`rts/`, `mix/`) содержит свой `settings.yaml`. Ключевые настройки:
+Каждая папка-тикер (`rts/`, `mix/`, `ng/`, `br/`, `gold/`, `si/`, `spyf/`) содержит свой `settings.yaml`. Ключевые настройки:
 
 | Параметр | Назначение |
 | --- | --- |
-| `ticker` | Инструмент (RTS / NG / MIX) |
+| `ticker` | Инструмент (RTS / NG / MIX / BR / GOLD / Si / SPYF) |
 | `model_name` | Модель эмбеддингов: `embeddinggemma` (default), `bge-m3`, `qwen3-embedding:0.6b` |
 | `provider` | Источники новостей (`investing_prime_interfax`) |
 | `url_ai` | Ollama API: `http://localhost:11434/api/embeddings` |
@@ -197,8 +200,8 @@ beget/
 
 ## Code Patterns
 
-- Папки `rts/` и `mix/` содержат идентичные скрипты пайплайна (кроме `create_markdown_files.py` — только в `rts/`), каждая со своим `settings.yaml`
-- Все скрипты в `rts/` и `mix/` читают конфигурацию из `settings.yaml` через `yaml.safe_load` на уровне модуля
+- Папки `rts/`, `mix/`, `ng/`, `br/`, `gold/`, `si/`, `spyf/` содержат идентичные скрипты пайплайна (кроме `create_markdown_files.py` — только в `rts/`), каждая со своим `settings.yaml`
+- Все скрипты в папках-тикерах читают конфигурацию из `settings.yaml` через `yaml.safe_load` на уровне модуля
 - Скрипты в `trade/` не используют `settings.yaml` — конфигурация (тикеры, пути) захардкожена
 - Три скрипта `trade_*_tri.py` почти идентичны, различаются только тикерами, количеством и путями
 - Логирование: каждый скрипт создаёт файл `{script_name}_{timestamp}.txt`, ротация до 3 файлов (`rts/log/` для rts-скриптов, `trade/log/` для trade-скриптов)
