@@ -243,3 +243,6 @@ spyf/log/*
 spyf/plots/*
 spyf/*.pkl
 spyf/*.xlsx
+
+buhinvest_analize/*.png
+buhinvest_analize/*.html
