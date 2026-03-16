@@ -566,7 +566,8 @@ def main(path_db_day, cache_file):
     ax1.set_xlabel("Date")
     ax1.grid(True, axis='y', alpha=0.3)
     ax1.set_title(
-        f"Cumulative P/L & Best Window (k) {model_name.split(':')[0]} {provider} {timestamp}"
+        f"{ticker} Cumulative P/L & Best Window (k) "
+        f"{model_name.split(':')[0]} {provider} {timestamp}"
         )
 
     # Вторая ось Y для столбчатой диаграммы (слева)
