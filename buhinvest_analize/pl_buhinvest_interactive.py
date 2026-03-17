@@ -432,7 +432,7 @@ fig.update_layout(
     title_text=f"Buhinvest Futures RTS+MIX — Анализ доходности<br><sub>{stats_text}</sub>",
     title_x=0.5,
     showlegend=True,
-    legend=dict(orientation="h", yanchor="bottom", y=-0.02, xanchor="center", x=0.5),
+    legend=dict(orientation="h", yanchor="top", y=-0.07, xanchor="center", x=0.5),
     template="plotly_white",
     hovermode="x unified",
 )
@@ -444,9 +444,8 @@ fig.update_yaxes(ticksuffix="%", row=3, col=2)
 fig.update_xaxes(tickformat="%Y-%m-%d", row=4, col=1, title_text="P/L (руб.)")
 fig.update_yaxes(title_text="RF", row=5, col=2)
 
-# ── Таблица статистики (Доходность / Риск / Статистика сделок) ─────────────
-# Левая колонка — Доходность + Риск, правая — Статистика сделок
-left_col = [
+# ── Таблица статистики (6 колонок: Доходность | Риск | Статистика сделок) ──
+sec1 = [  # ДОХОДНОСТЬ
     ["<b>ДОХОДНОСТЬ</b>", ""],
     ["Чистая прибыль", f"{total_profit:,.0f} ₽"],
     ["Годовая прибыль (экстрапол.)", f"{annual_profit:,.0f} ₽"],
@@ -454,64 +453,62 @@ left_col = [
     ["Медианный P/L в день", f"{median_day:,.0f} ₽"],
     ["Лучший день", f"{best_day:,.0f} ₽"],
     ["Худший день", f"{worst_day:,.0f} ₽"],
+]
+
+sec2 = [  # РИСК
     ["<b>РИСК</b>", ""],
     ["Max Drawdown", f"{max_dd:,.0f} ₽"],
-    ["Длительность макс. просадки", f"{max_dd_duration} дней"],
-    ["Волатильность (годовая)", f"{volatility:,.0f} ₽"],
+    ["Длит. макс. просадки", f"{max_dd_duration} дней"],
+    ["Волатильность (год.)", f"{volatility:,.0f} ₽"],
     ["Std дневного P/L", f"{std_day:,.0f} ₽"],
+    ["VaR 95%", f"{np.percentile(pl, 5):,.0f} ₽"],
+    ["CVaR 95%", f"{pl[pl <= np.percentile(pl, 5)].mean():,.0f} ₽"],
 ]
 
-right_col = [
+sec3 = [  # СТАТИСТИКА СДЕЛОК
     ["<b>СТАТИСТИКА СДЕЛОК</b>", ""],
     ["Торговых дней", f"{total_days}"],
-    ["Прибыльных дней", f"{win_days} ({win_rate:.1f}%)"],
-    ["Убыточных дней", f"{loss_days} ({100 - win_rate:.1f}%)"],
-    ["Нулевых дней", f"{zero_days}"],
-    ["Средний выигрыш", f"{avg_win:,.0f} ₽"],
-    ["Средний проигрыш", f"{avg_loss:,.0f} ₽"],
+    ["Win / Loss / Zero", f"{win_days} / {loss_days} / {zero_days}"],
+    ["Win rate", f"{win_rate:.1f}%"],
+    ["Ср. выигрыш / проигрыш", f"{avg_win:,.0f} / {avg_loss:,.0f} ₽"],
     ["Макс. серия побед", f"{max_consec_wins}"],
     ["Макс. серия убытков", f"{max_consec_losses}"],
-    ["Прибыльных месяцев", f"{win_months} из {win_months + loss_months}"],
-    ["", ""],
-    ["", ""],
 ]
 
-num_rows = max(len(left_col), len(right_col))
-while len(left_col) < num_rows:
-    left_col.append(["", ""])
-while len(right_col) < num_rows:
-    right_col.append(["", ""])
+num_rows = max(len(sec1), len(sec2), len(sec3))
+for sec in (sec1, sec2, sec3):
+    while len(sec) < num_rows:
+        sec.append(["", ""])
 
-col1_name, col1_val, col2_name, col2_val = [], [], [], []
-col1_colors, col2_colors = [], []
+cols = [[], [], [], [], [], []]  # name1, val1, name2, val2, name3, val3
+colors = [[], [], []]
 for i in range(num_rows):
-    ln, lv = left_col[i]
-    rn, rv = right_col[i]
-    is_header_l = lv == "" and ln.startswith("<b>")
-    is_header_r = rv == "" and rn.startswith("<b>")
-    col1_name.append(ln)
-    col1_val.append(f"<b>{lv}</b>" if lv and not is_header_l else lv)
-    col2_name.append(rn)
-    col2_val.append(f"<b>{rv}</b>" if rv and not is_header_r else rv)
-    col1_colors.append("#e3f2fd" if is_header_l else "white")
-    col2_colors.append("#e3f2fd" if is_header_r else "white")
+    for j, sec in enumerate((sec1, sec2, sec3)):
+        n, v = sec[i]
+        is_hdr = v == "" and n.startswith("<b>")
+        cols[j * 2].append(n)
+        cols[j * 2 + 1].append(f"<b>{v}</b>" if v and not is_hdr else v)
+        if is_hdr:
+            colors[j].append("#e3f2fd")
+        else:
+            colors[j].append("#f5f5f5" if i % 2 == 0 else "white")
 
 fig_stats = go.Figure(
     go.Table(
-        columnwidth=[250, 120, 250, 120],
+        columnwidth=[200, 130, 180, 120, 200, 140],
         header=dict(
-            values=["<b>Показатель</b>", "<b>Значение</b>",
-                    "<b>Показатель</b>", "<b>Значение</b>"],
+            values=["<b>Показатель</b>", "<b>Значение</b>"] * 3,
             fill_color="#1565c0",
             font=dict(color="white", size=14),
             align="left",
             height=32,
         ),
         cells=dict(
-            values=[col1_name, col1_val, col2_name, col2_val],
-            fill_color=[col1_colors, col1_colors, col2_colors, col2_colors],
+            values=cols,
+            fill_color=[colors[0], colors[0], colors[1], colors[1],
+                        colors[2], colors[2]],
             font=dict(size=13, color="#212121"),
-            align=["left", "right", "left", "right"],
+            align=["left", "right", "left", "right", "left", "right"],
             height=26,
         ),
     )
@@ -571,7 +568,6 @@ fig_table.update_layout(
 output = SAVE_PATH / "pl_buhinvest_interactive.html"
 
 charts_html = fig.to_html(include_plotlyjs="cdn", full_html=False)
-stats_html = fig_stats.to_html(include_plotlyjs=False, full_html=False)
 coeff_html = fig_table.to_html(include_plotlyjs=False, full_html=False)
 
 with open(output, "w", encoding="utf-8") as f:
@@ -579,7 +575,7 @@ with open(output, "w", encoding="utf-8") as f:
     f.write("<title>Buhinvest — Анализ доходности</title>\n</head><body>\n")
     f.write(charts_html)
     f.write("\n<hr style='margin:30px 0; border:1px solid #ccc'>\n")
-    f.write(stats_html)
+    f.write(fig_stats.to_html(include_plotlyjs=False, full_html=False))
     f.write("\n<hr style='margin:30px 0; border:1px solid #ccc'>\n")
     f.write(coeff_html)
     f.write("\n</body></html>")
