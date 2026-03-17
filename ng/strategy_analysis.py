@@ -502,7 +502,7 @@ fig_table.update_layout(
 )
 
 # ── Сохранение в HTML ────────────────────────────────────────────────────
-output = SAVE_PATH / "plot" / "strategy_analysis.html"
+output = SAVE_PATH / "plots" / "strategy_analysis.html"
 
 charts_html = fig.to_html(include_plotlyjs="cdn", full_html=False)
 
