@@ -538,16 +538,16 @@ def main(path_db_day, cache_file):
         print("\nРезультирующий DataFrame (df_rez):")
         print(df_rez)
 
-    # Сохранение DataFrame в Excel файл
+    # --- ЗЕРКАЛЬНОЕ ОТОБРАЖЕНИЕ (инверсия стратегии) ---
+    df_rez["P/L"] *= -1
+    # ---------------------------------------------------
+
+    # Сохранение DataFrame в Excel файл (уже с инверсией P/L)
     df_rez.to_excel(Path(__file__).parent / 'df_rez_output.xlsx', index=True)
 
     # ===============================
     # График cumulative P/L + наложенная столбчатая диаграмма max
     # ===============================
-
-    # --- ЗЕРКАЛЬНОЕ ОТОБРАЖЕНИЕ ---
-    df_rez["P/L"] *= -1
-    # -------------------------------
 
     df_rez["CUM_P/L"] = df_rez["P/L"].cumsum()
 
@@ -566,7 +566,8 @@ def main(path_db_day, cache_file):
     ax1.set_xlabel("Date")
     ax1.grid(True, axis='y', alpha=0.3)
     ax1.set_title(
-        f"Cumulative P/L & Best Window (k) {model_name.split(':')[0]} {provider} {timestamp}"
+        f"{ticker} Cumulative P/L & Best Window (k) "
+        f"{model_name.split(':')[0]} {provider} {timestamp}"
         )
 
     # Вторая ось Y для столбчатой диаграммы (слева)

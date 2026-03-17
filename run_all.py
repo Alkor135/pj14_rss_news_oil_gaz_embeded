@@ -53,6 +53,17 @@ SCRIPTS = [
     r"spyf\convert_minutes_to_days.py",
     r"spyf\create_embedding.py",
     r"spyf\simulate_trade.py",
+
+    r"rts\strategy_analysis.py",
+    r"mix\strategy_analysis.py",
+    r"ng\strategy_analysis.py",
+    r"br\strategy_analysis.py",
+    r"gold\strategy_analysis.py",
+    r"si\strategy_analysis.py",
+    r"spyf\strategy_analysis.py",
+
+    r"buhinvest_analize\pl_buhinvest.py",
+    r"buhinvest_analize\pl_buhinvest_interactive.py",
 ]
 
 def run_script(script: str) -> int:

@@ -198,6 +198,14 @@ beget/
 - `beget/settings.yaml` — ссылки для investing-скрапера (ключ `rss_links`)
 - `beget/server/settings.yaml` — ленты для all_providers (ключи `rss.interfax/prime/investing`, `base_dir`)
 
+## Buhinvest Analysis
+
+Папка `buhinvest_analize/` содержит скрипты анализа реальной доходности торговли из Excel-файла Buhinvest.
+
+- `pl_buhinvest.py` — статические графики (Matplotlib): месячный P/L и накопительная прибыль (PNG)
+- `pl_buhinvest_interactive.py` — интерактивный отчёт (Plotly): 10 панелей (дневной/месячный/недельный P/L, баланс, drawdown, скользящие средние, распределение P/L) + таблица метрик (Sharpe, Sortino, Calmar, Profit Factor, Recovery Factor, Expectancy) → HTML
+- Источник данных: `C:\Users\Alkor\gd\buhinvest_futures_RTS_MIX_full.xlsx`
+
 ## Code Patterns
 
 - Папки `rts/`, `mix/`, `ng/`, `br/`, `gold/`, `si/`, `spyf/` содержат идентичные скрипты пайплайна (кроме `create_markdown_files.py` — только в `rts/`), каждая со своим `settings.yaml`
