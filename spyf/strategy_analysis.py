@@ -315,6 +315,7 @@ fig.update_layout(
 for row, col in [(1, 1), (1, 2), (2, 1), (2, 2), (3, 1), (4, 1), (4, 2), (5, 1)]:
     fig.update_yaxes(tickformat=",", row=row, col=col)
 fig.update_xaxes(tickformat="%Y-%m-%d", row=3, col=2, title_text="P/L")
+fig.update_xaxes(tickformat="%Y", dtick="M12", row=3, col=1)
 
 # ── Таблица статистики (3 секции: Доходность | Риск | Статистика сделок) ──
 sec1 = [
