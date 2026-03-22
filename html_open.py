@@ -22,3 +22,22 @@ for file in files:
     webbrowser.open_new_tab(url)
     
     time.sleep(0.3)  # небольшая пауза, чтобы вкладки не слипались
+
+
+# import subprocess
+
+# # Список файлов
+# files = [
+#     r"C:\Users\Alkor\VSCode\pj14_rss_news_oil_gaz_embeded\buhinvest_analize\pl_buhinvest_interactive.html",
+#     r"C:\Users\Alkor\VSCode\pj14_rss_news_oil_gaz_embeded\rts\plots\strategy_analysis.html",
+#     r"C:\Users\Alkor\VSCode\pj14_rss_news_oil_gaz_embeded\mix\plots\strategy_analysis.html",
+#     r"C:\Users\Alkor\VSCode\pj14_rss_news_oil_gaz_embeded\br\plots\strategy_analysis.html",
+#     r"C:\Users\Alkor\VSCode\pj14_rss_news_oil_gaz_embeded\gold\plots\strategy_analysis.html",
+#     r"C:\Users\Alkor\VSCode\pj14_rss_news_oil_gaz_embeded\ng\plots\strategy_analysis.html",
+#     r"C:\Users\Alkor\VSCode\pj14_rss_news_oil_gaz_embeded\si\plots\strategy_analysis.html",
+#     r"C:\Users\Alkor\VSCode\pj14_rss_news_oil_gaz_embeded\spyf\plots\strategy_analysis.html",
+# ]
+
+# chrome = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+
+# subprocess.Popen([chrome] + files)
