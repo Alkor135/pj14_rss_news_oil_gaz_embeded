@@ -384,6 +384,10 @@ def predict_next_session(
     file_name = f"{last_date.date()}.txt"
     file_path = predict_dir / file_name
 
+    if file_path.exists():
+        logging.info(f"⏭️ Файл предсказания уже существует, пропускаем: {file_path}")
+        return
+
     with open(file_path, "w", encoding="utf-8") as f:
         f.write(
             f"Дата предсказания: {last_date.date()}, предыдущих дней для сравнения {best_k}:\n"
