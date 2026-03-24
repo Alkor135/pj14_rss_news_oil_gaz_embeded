@@ -211,7 +211,60 @@ def get_future_date_results(
                 logger.error(f"Ошибка получения данных для {start_date}. Прерываем процесс, чтобы повторить попытку в следующий запуск.")
                 break
             elif 'history' not in j or not j['history'].get('data'):
-                logger.info(f"Нет данных по торгуемым фьючерсам {ticker} за {start_date}")
+                # History API не вернул данных — возможно, торги ещё идут.
+                # Fallback: берём SECID и LSTTRADE из последней записи в БД.
+                cursor.execute("SELECT SECID, LSTTRADE FROM Futures ORDER BY TRADEDATE DESC LIMIT 1")
+                last_row = cursor.fetchone()
+                if last_row is None:
+                    logger.info(f"Нет данных по торгуемым фьючерсам {ticker} за {start_date}, БД пуста — пропускаем")
+                    start_date += timedelta(days=1)
+                    continue
+
+                last_secid = last_row[0]
+                last_lsttrade = datetime.strptime(last_row[1], '%Y-%m-%d').date() if isinstance(last_row[1], str) else last_row[1]
+
+                if last_lsttrade <= start_date:
+                    # Контракт из БД истёк — ролловер.
+                    # Пробуем взять ticker_close из settings.yaml как новый контракт.
+                    ticker_close = settings.get('ticker_close')
+                    if ticker_close and ticker_close != last_secid:
+                        # Проверяем, что ticker_close — действующий контракт
+                        _, tc_lsttrade_str = get_info_future(session, ticker_close)
+                        try:
+                            tc_lsttrade = datetime.strptime(tc_lsttrade_str, '%Y-%m-%d').date()
+                        except (ValueError, TypeError):
+                            tc_lsttrade = None
+
+                        if tc_lsttrade and tc_lsttrade > start_date:
+                            logger.info(f"Ролловер: {last_secid} истёк {last_lsttrade}, "
+                                        f"используем ticker_close={ticker_close} (LSTTRADE={tc_lsttrade})")
+                            current_ticker = ticker_close
+                            lasttrade = tc_lsttrade
+
+                            minute_df = get_minute_candles(session, current_ticker, start_date)
+                            minute_df['LSTTRADE'] = lasttrade
+                            if not minute_df.empty:
+                                save_to_db(minute_df, connection)
+
+                            start_date += timedelta(days=1)
+                            continue
+
+                    # ticker_close отсутствует, совпадает со старым или тоже истёк — ждём history API
+                    logger.info(f"Нет данных по торгуемым фьючерсам {ticker} за {start_date}, "
+                                f"контракт {last_secid} истекает {last_lsttrade} — ждём history API")
+                    start_date += timedelta(days=1)
+                    continue
+
+                # Контракт ещё активен, используем его для загрузки минутных данных
+                logger.info(f"History API пуст за {start_date}, fallback на {last_secid} (LSTTRADE={last_lsttrade})")
+                current_ticker = last_secid
+                lasttrade = last_lsttrade
+
+                minute_df = get_minute_candles(session, current_ticker, start_date)
+                minute_df['LSTTRADE'] = lasttrade
+                if not minute_df.empty:
+                    save_to_db(minute_df, connection)
+
                 start_date += timedelta(days=1)
                 continue
 

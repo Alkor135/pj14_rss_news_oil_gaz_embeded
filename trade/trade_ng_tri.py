@@ -10,17 +10,22 @@ from pathlib import Path
 from datetime import datetime, date
 import re
 import logging
+import yaml
 
-# --- Конфигурация ---
-# Торгуемые инструменты и количество
-ticker_close = 'NGZ5'  # Инструмент для закрытия позиции
-quantity_close = '1'
-ticker_open = 'NGZ5'  # Инструмент для открытия новой позиции
-quantity_open = '1'
-ticker_lc = 'ng'  # Название инструмента в нижнем регистре для путей
+# --- Конфигурация из settings.yaml ---
+ticker_lc = 'ng'
+settings_path = Path(__file__).parent.parent / ticker_lc / 'settings.yaml'
+
+with open(settings_path, encoding='utf-8') as f:
+    cfg = yaml.safe_load(f)
+
+ticker_close = cfg['ticker_close']
+ticker_open = cfg['ticker_open']
+quantity_close = str(cfg.get('quantity_close', 1))
+quantity_open = str(cfg.get('quantity_open', 1))
 
 # Пути к файлам
-predict_path = Path(f"C:/Users/Alkor/gd/predict_ai/{ticker_lc}_investing_ollama")
+predict_path = Path(cfg['predict_path'].format(ticker_lc=ticker_lc))
 log_path = predict_path / "log"
 trade_path = Path(r"C:\QUIK_VTB_2025_ЕБС\algotrade")
 trade_filepath = trade_path / "input.tri"

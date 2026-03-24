@@ -2,6 +2,10 @@
 
 ticker: 'RTS'
 ticker_lc: 'rts'
+ticker_close: 'RIM6'  # Фьючерс для закрытия позиции (trade)
+ticker_open: 'RIM6'   # Фьючерс для открытия позиции (trade)
+quantity_close: 1
+quantity_open: 1
 
 # Выбор модели для векторизации
 #model_name: 'bge-m3'
