@@ -258,8 +258,14 @@ def get_future_date_results(
                             continue
 
                     # ticker_close отсутствует, совпадает со старым или тоже истёк — ждём history API
-                    logger.info(f"Нет данных по торгуемым фьючерсам {ticker} за {start_date}, "
-                                f"контракт {last_secid} истекает {last_lsttrade} — ждём history API")
+                    if not ticker_close:
+                        logger.info(f"Контракт {last_secid} истёк {last_lsttrade}, "
+                                    f"ticker_close не задан в settings.yaml — ждём history API")
+                    elif ticker_close == last_secid:
+                        logger.warning(f"ticker_close={ticker_close} совпадает с истёкшим контрактом "
+                                       f"{last_secid} — обновите settings.yaml")
+                    else:
+                        logger.info(f"ticker_close={ticker_close} тоже истёк — ждём history API")
                     start_date += timedelta(days=1)
                     continue
 
