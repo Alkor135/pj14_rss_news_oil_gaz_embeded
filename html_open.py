@@ -40,4 +40,4 @@ files = [
 
 chrome = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
 
-subprocess.Popen([chrome] + files)
+subprocess.Popen([chrome, "--new-window"] + files)
