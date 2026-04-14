@@ -9,6 +9,13 @@ import subprocess
 import sys
 import os
 
+from colorama import Fore, Style, init as colorama_init
+
+colorama_init()
+
+OK = f"{Fore.GREEN}[OK]{Style.RESET_ALL}"
+FAIL = f"{Fore.RED}[FAIL]{Style.RESET_ALL}"
+
 BASE = r"C:\Users\Alkor\VSCode\pj14_rss_news_oil_gaz_embeded"
 PYTHON = os.path.join(BASE, ".venv", "Scripts", "python.exe")
 
@@ -58,10 +65,10 @@ def main():
     for script in SCRIPTS:
         code = run_script(script)
         if code != 0:
-            print(f"❌ Ошибка выполнения {script}, код {code}")
+            print(f"{FAIL} Ошибка выполнения {script}, код {code}")
             os.system("pause")
             sys.exit(code)
-    print("\n✅ Все скрипты выполнены успешно")
+    print(f"\n{OK} Все скрипты выполнены успешно")
     input("\nНажмите Enter для выхода...")  # вместо sys.exit вручную
 
 if __name__ == "__main__":

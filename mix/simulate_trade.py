@@ -77,17 +77,17 @@ cleanup_old_logs(log_dir, max_files=3)
 logging.info(f"🚀 Запуск скрипта. Лог-файл: {log_file}")
 
 def load_quotes(path_db_quote):
-    """Загрузка котировок и расчет NEXT_BODY."""
+    """Загрузка котировок и расчет NEXT_OPEN_TO_OPEN (open-to-open следующей сессии)."""
     with sqlite3.connect(path_db_quote) as conn:
         df = pd.read_sql_query(
-            "SELECT TRADEDATE, OPEN, CLOSE FROM Futures",
+            "SELECT TRADEDATE, OPEN FROM Futures",
             conn,
             parse_dates=['TRADEDATE']  # <-- Преобразуем TRADEDATE в datetime
         )
     df = df.set_index('TRADEDATE').sort_index()
-    df['NEXT_BODY'] = (df['CLOSE'] - df['OPEN']).shift(-1)
-    df = df.dropna(subset=['NEXT_BODY'])
-    return df[['NEXT_BODY']]
+    df['NEXT_OPEN_TO_OPEN'] = df['OPEN'].shift(-2) - df['OPEN'].shift(-1)
+    df = df.dropna(subset=['NEXT_OPEN_TO_OPEN'])
+    return df[['NEXT_OPEN_TO_OPEN']]
 
 def load_cache(cache_file_path):
     """Загрузка кэша эмбеддингов."""
@@ -195,7 +195,7 @@ def compute_max_k(
     start_date: pd.Timestamp,
     k: int,
     col_chunks: str = "CHUNKS",
-    col_body: str = "NEXT_BODY",
+    col_body: str = "NEXT_OPEN_TO_OPEN",
     top_k_chunks: int = 5
 ) -> pd.Series:
 
@@ -348,27 +348,27 @@ def predict_next_session(
 
     # ------------------------------------------------------
     # 5️⃣ Определяем направление движения
-    #     ИСПОЛЬЗУЕМ NEXT_BODY (как в тестировании)
+    #     ИСПОЛЬЗУЕМ NEXT_OPEN_TO_OPEN (как в тестировании)
     # ------------------------------------------------------
-    # df_rez не содержит NEXT_BODY,
+    # df_rez не содержит NEXT_OPEN_TO_OPEN,
     # поэтому нужно взять его из df_combined.
     # Но df_combined в эту функцию не передаётся,
-    # поэтому правильнее передать df_bar (где есть NEXT_BODY).
+    # поэтому правильнее передать df_bar (где есть NEXT_OPEN_TO_OPEN).
 
-    # Получаем NEXT_BODY исторического похожего дня
+    # Получаем NEXT_OPEN_TO_OPEN исторического похожего дня
     if best_date not in df_bar.index:
-        logging.warning("Лучший день отсутствует в df_bar (нет NEXT_BODY)")
+        logging.warning("Лучший день отсутствует в df_bar (нет NEXT_OPEN_TO_OPEN)")
         return
 
-    next_body_value = df_bar.loc[best_date, "NEXT_BODY"]
+    next_open_to_open_value = df_bar.loc[best_date, "NEXT_OPEN_TO_OPEN"]
 
-    # Определяем направление строго по знаку NEXT_BODY
-    if next_body_value >= 0:
+    # Определяем направление строго по знаку NEXT_OPEN_TO_OPEN
+    if next_open_to_open_value >= 0:
         direction = "up"
-    elif next_body_value < 0:
+    elif next_open_to_open_value < 0:
         direction = "down"
 
-    logging.info(f"NEXT_BODY похожего дня: {next_body_value:.2f}")
+    logging.info(f"NEXT_OPEN_TO_OPEN похожего дня: {next_open_to_open_value:.2f}")
     logging.info(f"Предсказанное направление: {direction}")
 
     # ------------------------------------------------------
@@ -396,7 +396,7 @@ def predict_next_session(
             f"Даты для сравнения: {', '.join(compare_dates)}\n"
         )
         f.write(f"Предсказанное направление: {direction}\n")
-        f.write(f"NEXT_BODY похожего дня: {next_body_value:.2f}\n")
+        f.write(f"NEXT_OPEN_TO_OPEN похожего дня: {next_open_to_open_value:.2f}\n")
         f.write(f"Процент сходства: {best_similarity * 100:.2f}%\n")
         f.write("Метаданные ближайшего похожего:\n")
         f.write(f"  date: {best_date.date()}\n")
@@ -469,8 +469,8 @@ def main(path_db_day, cache_file):
         print(df_bar)
         print("\ndf_emb:")
         print(df_emb)
-        print('\ndf_combined[["NEXT_BODY", "CHUNKS"]]:')
-        print(df_combined[["NEXT_BODY", "CHUNKS"]])
+        print('\ndf_combined[["NEXT_OPEN_TO_OPEN", "CHUNKS"]]:')
+        print(df_combined[["NEXT_OPEN_TO_OPEN", "CHUNKS"]])
         print("\ndf_combined:")
         print(df_combined)
 
