@@ -1,9 +1,11 @@
 """
 Исполнение сделок по фьючерсу NG в QUIK через .tri-файлы.
 Читает предсказание текущего дня, сравнивает с предыдущим.
-Открывает позицию в противоположную сторону от предсказания (инверсия стратегии).
-Поддерживает ролловер: при смене контракта закрывает старый и открывает новый.
-Конфигурация (тикеры, количество) захардкожена, логирование с ротацией (3 файла).
+Открывает позицию В НАПРАВЛЕНИИ предсказания (без инверсии — в отличие от RTS/MIX).
+Поддерживает ролловер: при ticker_close != ticker_open закрывает старый контракт и открывает новый.
+Конфигурация (ticker_close, ticker_open, quantity_close, quantity_open, predict_path) читается
+из ng/settings.yaml. Путь QUIK input.tri и торговый счёт SPBFUT захардкожены.
+Логирование в trade/log/ с ротацией (3 файла).
 """
 
 from pathlib import Path
@@ -26,7 +28,7 @@ quantity_open = str(cfg.get('quantity_open', 1))
 
 # Пути к файлам
 predict_path = Path(cfg['predict_path'].format(ticker_lc=ticker_lc))
-log_path = predict_path / "log"
+log_path = Path(__file__).parent / "log"
 trade_path = Path(r"C:\QUIK_VTB_2025_ЕБС\algotrade")
 trade_filepath = trade_path / "input.tri"
 
@@ -39,17 +41,35 @@ today = date.today()
 current_filename = today.strftime("%Y-%m-%d") + ".txt"
 current_filepath = predict_path / current_filename
 
-# Настройка логгирования
-log_file = log_path / f'trade_{ticker_lc}_tri.txt'
+# --- Настройка логгирования ---
+# Имя файла лога с датой и временем запуска (один файл на запуск)
+timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+log_file = log_path / f'trade_{ticker_lc}_tri_{timestamp}.txt'
+
+# Настройка логгирования: файл + консоль
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler(log_file, mode='a', encoding='utf-8'),
+        logging.FileHandler(log_file, encoding='utf-8'),
         logging.StreamHandler()
     ]
 )
 logger = logging.getLogger(__name__)
+
+# Очистка старых логов (оставляем только 3 самых новых)
+def cleanup_old_logs(log_dir: Path, prefix: str, max_files: int = 3):
+    """Удаляет старые лог-файлы, оставляя max_files самых новых."""
+    log_files = sorted(log_dir.glob(f"{prefix}_*.txt"))
+    if len(log_files) > max_files:
+        for old_file in log_files[:-max_files]:
+            try:
+                old_file.unlink()
+                logger.info(f"Удалён старый лог: {old_file.name}")
+            except Exception as e:
+                logger.warning(f"Не удалось удалить {old_file}: {e}")
+
+cleanup_old_logs(log_path, prefix=f"trade_{ticker_lc}_tri")
 
 # --- Вспомогательные функции ---
 def get_direction(filepath):

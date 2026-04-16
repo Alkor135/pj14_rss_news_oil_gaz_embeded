@@ -1,52 +1,43 @@
 # Анализ доходности из Buhinvest (RUR)
 
-Этот проект предназначен для визуализации и анализа данных о доходности торговых операций из файла 
-`buhinvest_futures_RTS_MIX_без_пароля.xlsx` в рублях (RUR).
+Визуализация реальной доходности торговых операций из Excel-файла Buhinvest (в рублях).
 
-## Функционал
+Источник данных: `C:\Users\Alkor\gd\buhinvest_futures_RTS_MIX_full.xlsx` (лист `Data`).
 
-Скрипт `pl_buhinvest.py` выполняет следующее:
+## Скрипты
 
-1. **Чтение данных**:
-   - Загружает лист `Data` из Excel-файла.
-   - Использует колонки: `Дата`, `Profit/Loss к предыдущему`, `Общ. прибыль Руб.`.
+### `pl_buhinvest.py` — статические графики (Matplotlib)
 
-2. **Обработка данных**:
-   - Преобразует даты и числовые столбцы.
-   - Удаляет некорректные значения.
-   - Агрегирует данные по месяцам и дням.
+- `pl_by_month.png` — столбчатый график ежемесячного P/L (синий — прибыль, красный — убыток)
+- `cumulative_profit.png` — линейный график накопительной прибыли по дням
 
-3. **Генерация графиков**:
-   - **`pl_by_month.png`** — столбчатый график ежемесячного Profit/Loss.
-     - Положительные значения: синие столбцы.
-     - Отрицательные значения: красные столбцы.
-     - Подписи значений над/под столбцами.
-   - **`cumulative_profit.png`** — линейный график накопительной прибыли по дням.
+Используемые колонки Excel: `Дата`, `Profit/Loss к предыдущему`, `Общ. прибыль Руб.`.
 
-## Использование
+### `pl_buhinvest_interactive.py` — интерактивный отчёт (Plotly)
 
-1. Убедитесь, что файл `buhinvest_futures_RTS_MIX_без_пароля.xlsx` находится по пути:
-   C:\Users\Alkor\gd\buhinvest_futures_RTS_MIX_без_пароля.xlsx
-   (Или измените `file_path` в скрипте при необходимости.)
+Генерирует `pl_buhinvest_interactive.html` с 10 панелями:
 
-2. Установите зависимости:
-   bash pip install pandas matplotlib
-   
-3. Запустите скрипт:
-   bash python pl_buhinvest.py
+- Дневной / недельный / месячный P/L
+- Накопительная прибыль, баланс, доходность в процентах
+- Распределение P/L (гистограмма)
+- Drawdown
+- Скользящие средние P/L
+- Таблица ключевых метрик: Sharpe, Sortino, Calmar, Profit Factor, Recovery Factor, Expectancy
 
-4. Результат:
-   - Два графика будут сохранены в текущей директории:
-     - `pl_by_month.png`
-     - `cumulative_profit.png`
+Открывается в `html_open.py` вместе со `strategy_analysis.html` каждого тикера.
 
-## Требования
+## Запуск
 
-- Python 3.8+
-- pandas
-- matplotlib
+```bash
+python buhinvest_analize/pl_buhinvest.py
+python buhinvest_analize/pl_buhinvest_interactive.py
+```
 
----
+Оба скрипта вызываются в конце `run_all.py` и `run_enb_sim_an.py`.
 
-*Автор: Alkor135*  
-*Дата: 2025*
+## Зависимости
+
+- Python 3.10+
+- `pandas`, `numpy`, `openpyxl`
+- `matplotlib` (для `pl_buhinvest.py`)
+- `plotly` (для `pl_buhinvest_interactive.py`)

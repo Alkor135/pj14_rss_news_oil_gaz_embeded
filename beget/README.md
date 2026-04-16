@@ -1,43 +1,50 @@
-# beget / sync_files
+# beget — инфраструктура RSS-сбора
 
-Скрипт для синхронизации файлов базы данных (`.db`) и логов (`.log`) с удалённого Linux-сервера на локальную Windows-машину через WSL и `rsync`.
+Папка содержит инструменты для сбора RSS-новостей на удалённом Ubuntu-сервере Beget и синхронизации результатов на локальную Windows-машину.
 
-## Требования
-- Windows с установленным WSL (рекомендуется Ubuntu).
-- Установлен `rsync` в WSL: `sudo apt update && sudo apt install rsync`.
-- Python 3.8+.
-- Настроенный SSH-доступ к удалённому серверу (лучше через SSH-ключи).
+## Содержимое
 
-## Установка
-1. Клонировать репозиторий в рабочую папку.
-2. Убедиться, что Python и WSL доступны в системе.
-3. Установить зависимости (если появятся) через `pip`.
+| Файл | Назначение |
+| --- | --- |
+| `sync_files.py` | Синхронизация `.db`-файлов с сервера через WSL + rsync |
+| `collect_rss_links_to_yaml.py` | Утилита: парсит страницу Investing webmaster-tools и собирает RSS-ссылки в `links.yaml` |
+| `settings.yaml` | Список RSS-ссылок Investing (ключ `rss_links`) — используется сервером |
+| `server/` | Скрипты, работающие на Ubuntu-сервере Beget (см. `server/README.md`) |
 
-## Конфигурация
-Основные параметры находятся в файле `beget/sync_files.py` в переменной `sync_configs`. Для каждой секции задаются:
-- `name` — метка секции.
-- `db_dir` — локальная папка для `.db` (пример: `C:\Users\Alkor\gd\db_rss_investing`).
-- `log_dir` — локальная папка для логов (пример: `C:\Users\Alkor\gd\db_rss_investing\log`).
-- `db_remote` — удалённая папка с `.db` (пример: `/home/user/rss_scraper/db_rss_investing/`).
-- `log_remote` — удалённая папка с логами.
-- `log_pattern` — шаблон логов (например: ``rss_scraper_investing_to_db_month_msk*.log``).
+## sync_files.py
 
-Скрипт использует `wsl rsync` и формирует пути в формате WSL: локальные пути преобразуются в `/mnt/c/...`.
+Запускает `rsync` через WSL с сервера `root@109.172.46.10` на две пары директорий:
 
-## Запуск
-Запустить скрипт командой:
+| Источник (сервер) | Назначение (Windows) |
+| --- | --- |
+| `/home/user/rss_scraper/db_rss_investing/` | `C:\Users\Alkor\gd\db_rss_investing\` |
+| `/home/user/rss_scraper/db_data/` | `C:\Users\Alkor\gd\db_rss\` |
 
+Флаги `--inplace --partial --size-only` — совместимость с SQLite и Google Drive. Логи операций пишутся в `sync.log` в целевых папках.
 
-Во время выполнения формируются записи в файле `sync.log` в указанных `log_dir`.
+### Требования
 
-## Как это работает (кратко)
-- Для каждой конфигурации создаётся `log_dir`.
-- Выполняется `rsync` для `.db` с опциями: ``--include=*/``, ``--include=**/*.db``, ``--exclude=*``.
-- Выполняется `rsync` для логов с использованием указанного `log_pattern`.
-- Вывод и ошибки записываются в `sync.log`. В случае ошибки процесс завершается с соответствующим кодом.
+- Windows с WSL (Ubuntu)
+- `rsync` в WSL: `sudo apt install rsync`
+- SSH-ключи для beget-сервера (вход без пароля)
 
-## Примечания и отладка
-- Проверьте SSH-доступ: `wsl ssh root@<host>` работает без ввода пароля (используйте SSH-ключи).
-- Убедитесь, что `rsync` установлен внутри WSL.
-- Если путь некорректен, проверьте преобразование Windows-пути в WSL: скрипт использует `f"/mnt/c{str(path)[2:].replace('\\', '/')}/"`.
-- Таймаут для каждой команды `rsync` — 600 секунд (можно изменить в коде).
+### Запуск
+
+```bash
+python beget/sync_files.py
+```
+
+Автоматически вызывается первым шагом из `run_all.py`.
+
+## collect_rss_links_to_yaml.py
+
+Разовая утилита. Парсит HTML страницы `https://ru.investing.com/webmaster-tools/rss`, собирает все ссылки на `.rss`-файлы и сохраняет в `links.yaml`. Запускать на IP, где страница открывается без 403.
+
+```bash
+python beget/collect_rss_links_to_yaml.py
+```
+
+## Два settings.yaml
+
+- `beget/settings.yaml` — RSS-ссылки Investing (ключ `rss_links`) для investing-скрапера
+- `beget/server/settings.yaml` — ленты для all_providers (ключи `rss.interfax` / `rss.prime` / `rss.investing` + `base_dir`)

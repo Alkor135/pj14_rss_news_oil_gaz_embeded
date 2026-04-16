@@ -24,6 +24,13 @@
 #     time.sleep(0.3)  # небольшая пауза, чтобы вкладки не слипались
 
 
+"""
+Открывает HTML-отчёты всех стратегий в одном новом окне Google Chrome.
+Включает strategy_analysis.html для каждого тикера (rts, mix, br, gold, ng, si, spyf)
+и отчёт реальной доходности buhinvest (pl_buhinvest_interactive.html).
+Путь к chrome.exe и список файлов захардкожены в скрипте.
+"""
+
 import subprocess
 
 # Список файлов

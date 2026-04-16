@@ -127,12 +127,13 @@ Quote DBs (SQLite)           create_embedding.py  →  embeddings_ollama.pkl
 **Stage 5 — Execution** (`trade/trade_rts_tri.py` и др.):
 
 - Живая торговля только для **RTS, MIX, NG** (нет trade-скриптов для BR, GOLD, SI, SPYF)
-- Читает файл предсказания текущего дня (`YYYY-MM-DD.txt`)
-- Открывает позицию в противоположную сторону от предсказания (инверсия стратегии)
-- Сравнивает с предыдущим предсказанием, формирует QUIK-транзакции
-- Дописывает блок в `C:\QUIK_VTB_2025_ЕБС\algotrade\input.tri`
+- Читает файл предсказания текущего дня (`YYYY-MM-DD.txt`) из `predict_path`
+- **RTS и MIX**: открывают позицию в ПРОТИВОПОЛОЖНУЮ сторону от предсказания (инверсия стратегии)
+- **NG**: открывает позицию В НАПРАВЛЕНИИ предсказания (без инверсии — намеренное отличие)
+- Сравнивает с предыдущим предсказанием, формирует QUIK-транзакции при смене направления
+- Дописывает блок в `C:\QUIK_VTB_2025_ЕБС\algotrade\input.tri` (кодировка `cp1251`)
 - Поддержка ролловера: когда `ticker_close != ticker_open`, выполняется переоткрытие позиции на новом контракте
-- Тикеры и количества захардкожены в каждом скрипте и обновляются вручную при смене контракта
+- Конфигурация (`ticker_close`, `ticker_open`, `quantity_close`, `quantity_open`, `predict_path`) читается из `{ticker_lc}/settings.yaml`; путь QUIK и торговый счёт SPBFUT захардкожены
 
 ## Configuration (`settings.yaml` в каждой папке-тикере)
 
@@ -141,16 +142,22 @@ Quote DBs (SQLite)           create_embedding.py  →  embeddings_ollama.pkl
 | Параметр | Назначение |
 | --- | --- |
 | `ticker` | Инструмент (RTS / NG / MIX / BR / GOLD / Si / SPYF) |
+| `ticker_close`, `ticker_open` | Коды фьючерсных контрактов для закрытия/открытия позиции (trade) |
+| `quantity_close`, `quantity_open` | Количество контрактов для закрытия/открытия (trade) |
 | `model_name` | Модель эмбеддингов: `embeddinggemma` (default), `bge-m3`, `qwen3-embedding:0.6b` |
-| `provider` | Источники новостей (`investing_prime_interfax`) |
+| `provider` | Источники новостей (`investing_prime_interfax` / `investing` / `prime_interfax`) |
 | `url_ai` | Ollama API: `http://localhost:11434/api/embeddings` |
 | `md_path` | Папка с markdown-файлами новостей |
 | `cache_file` | Путь к pickle-кэшу эмбеддингов |
+| `predict_path` | Папка для сохранения файлов предсказаний |
 | `start_date_test` | Начало периода бэктеста (`2025-10-01`) |
 | `test_days` | Скользящее окно оценки P/L (23 дня) |
 | `start_date_download_minutes` | Дата начала загрузки минутных свечей с MOEX |
 | `path_db_minute` | Путь к SQLite с минутными барами |
 | `path_db_day` | Путь к SQLite с дневными барами (21:00–20:59:59) |
+| `db_news_dir` | Папка с БД новостей (только для rts — `create_markdown_files.py`) |
+| `num_mds`, `num_dbs` | Сколько интервалов/БД обрабатывать (только rts) |
+| `time_start`, `time_end` | Границы торгового дня (`21:00:00` – `20:59:59`, только rts) |
 
 Размер чанков (`max_chunk_tokens`) зависит от модели и определяется в `create_embedding.py`.
 
@@ -230,8 +237,8 @@ beget/
 
 - Папки `rts/`, `mix/`, `ng/`, `br/`, `gold/`, `si/`, `spyf/` содержат скрипты пайплайна, каждая со своим `settings.yaml`. Общие для всех: `download_minutes_to_db.py`, `convert_minutes_to_days.py`, `create_embedding.py`, `simulate_trade.py`, `strategy_analysis.py`. Только в `rts/`: `create_markdown_files.py`. Только в `rts/` и `mix/`: `analyze_explain.py`, `check_pkl.py`
 - Все скрипты в папках-тикерах читают конфигурацию из `settings.yaml` через `yaml.safe_load` на уровне модуля
-- Скрипты в `trade/` не используют `settings.yaml` — конфигурация (тикеры, пути) захардкожена
-- Три скрипта `trade_*_tri.py` почти идентичны, различаются только тикерами, количеством и путями
+- Скрипты в `trade/` читают соответствующий `{ticker_lc}/settings.yaml` (через `Path(__file__).parent.parent / ticker_lc / 'settings.yaml'`): берут оттуда `ticker_close`, `ticker_open`, `quantity_close`, `quantity_open`, `predict_path`. Путь к `C:\QUIK_VTB_2025_ЕБС\algotrade\input.tri` и код торгового счёта `SPBFUT` захардкожены
+- Три скрипта `trade_*_tri.py` почти идентичны. Ключевое семантическое отличие: `trade_rts_tri.py` и `trade_mix_tri.py` используют инверсию предсказания (BUY при `down`, SELL при `up`), а `trade_ng_tri.py` следует предсказанию напрямую (BUY при `up`, SELL при `down`)
 - Логирование: каждый скрипт создаёт файл `{script_name}_{timestamp}.txt`, ротация до 3 файлов (`rts/log/` для rts-скриптов, `trade/log/` для trade-скриптов)
 - `.tri`-файлы пишутся в кодировке `cp1251` (требование QUIK)
 - Эмбеддинги нормализуются L2 при создании, поэтому `cosine = dot product`
