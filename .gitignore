@@ -246,3 +246,7 @@ spyf/*.xlsx
 
 buhinvest_analize/*.png
 buhinvest_analize/*.html
+
+# Локальные результаты адаптивного режимного walk-forward
+/research/adaptive_regime_walk_forward_summary.xlsx
+/*/research/adaptive_regime_walk_forward/
